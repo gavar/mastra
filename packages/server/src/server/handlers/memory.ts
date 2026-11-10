@@ -249,6 +249,7 @@ async function getMemoryFromContext({
 }): Promise<MastraMemory | null | undefined> {
   const logger = mastra.getLogger();
   let agent;
+  let fromStore = false;
   if (agentId) {
     try {
       agent = mastra.getAgentById(agentId);
@@ -262,6 +263,7 @@ async function getMemoryFromContext({
       const storedAgent = (await mastra.getEditor()?.agent.getById(agentId)) ?? null;
       if (storedAgent) {
         agent = storedAgent;
+        fromStore = true;
       }
     } catch (error) {
       logger.debug('Error getting stored agent', error);
@@ -296,9 +298,9 @@ async function getMemoryFromContext({
   }
 
   if (agent) {
-    // Duck-typed rather than `instanceof Agent`, so a duplicate @mastra/core install can't skip the check.
+    // Sub-agents (`SubAgent`) have no raw config and are never stored agents; everything else is checked.
     if ('toRawConfig' in agent) {
-      assertStoredAgentAccess({ agent, agentId: agentId!, requestContext, access: 'read' });
+      assertStoredAgentAccess({ agent, agentId: agentId!, requestContext, access: 'read', fromStore });
     }
     return await agent?.getMemory({
       requestContext,
@@ -357,12 +359,14 @@ async function getAgentFromContext({
   }
 
   // Then try stored agents
+  let fromStore = false;
   if (!agent) {
     logger.debug('Agent not found in registered agents, trying stored agents', { agentId });
     try {
       const storedAgent = (await mastra.getEditor()?.agent.getById(agentId)) ?? null;
       if (storedAgent) {
         agent = storedAgent;
+        fromStore = true;
       }
     } catch (error) {
       logger.debug('Error getting stored agent', error);
@@ -390,7 +394,7 @@ async function getAgentFromContext({
   }
 
   if (agent) {
-    assertStoredAgentAccess({ agent, agentId, requestContext, access: 'read' });
+    assertStoredAgentAccess({ agent, agentId, requestContext, access: 'read', fromStore });
   }
   return agent;
 }

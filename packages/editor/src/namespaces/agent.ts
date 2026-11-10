@@ -1269,6 +1269,9 @@ export class EditorAgentNamespace extends CrudEditorNamespace<
     // duplicate entry under a different key (agent.id vs config key), causing the list
     // endpoint to show the agent as "stored" instead of "code".
     if (!this.getCodeDefinedAgent(storedAgent.id)) {
+      // addAgent skips an id that is already registered (a concurrent or versioned load of the same agent), leaving
+      // `source` at its 'code' default. Callers rely on `source` to apply stored-agent visibility, so set it here.
+      agent.source = 'stored';
       this.mastra?.addAgent(agent, storedAgent.id, { source: 'stored' });
       this._registeredStoredAgentIds.add(storedAgent.id);
     }
