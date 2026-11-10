@@ -507,6 +507,12 @@ async function getOMStatus(
 export const GET_MEMORY_STATUS_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/status',
+  mcp: {
+    toolset: 'memory',
+    name: 'get_memory_status',
+    description: 'Show whether an agent has memory, its memory configuration, and its Observational Memory status.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: getMemoryStatusQuerySchema,
   responseSchema: memoryStatusResponseSchema,
@@ -673,6 +679,12 @@ export const GET_MEMORY_STATUS_ROUTE = createRoute({
 export const GET_MEMORY_CONFIG_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/config',
+  mcp: {
+    toolset: 'memory',
+    name: 'get_memory_status',
+    description: 'Show whether an agent has memory, its memory configuration, and its Observational Memory status.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: getMemoryConfigQuerySchema,
   responseSchema: memoryConfigResponseSchema,
@@ -741,6 +753,13 @@ export const GET_MEMORY_CONFIG_ROUTE = createRoute({
 export const GET_OBSERVATIONAL_MEMORY_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/observational-memory',
+  mcp: {
+    toolset: 'memory',
+    name: 'get_observations',
+    description:
+      "Get the current Observational Memory record (the agent's condensed observations) for a thread or resource.",
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: getObservationalMemoryQuerySchema,
   responseSchema: getObservationalMemoryResponseSchema,
@@ -961,6 +980,12 @@ export const AWAIT_BUFFER_STATUS_ROUTE = createRoute({
 export const LIST_THREADS_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/threads',
+  mcp: {
+    toolset: 'memory',
+    name: 'list_threads',
+    description: 'List conversation threads you can access, newest first.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: listThreadsQuerySchema,
   responseSchema: listThreadsResponseSchema,
@@ -1116,6 +1141,12 @@ export const LIST_THREADS_ROUTE = createRoute({
 export const GET_THREAD_BY_ID_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/threads/:threadId',
+  mcp: {
+    toolset: 'memory',
+    name: 'get_thread',
+    description: 'Get a conversation thread by id.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   pathParamSchema: threadIdPathParams,
   queryParamSchema: getThreadByIdQuerySchema,
@@ -1207,6 +1238,12 @@ export const GET_THREAD_BY_ID_ROUTE = createRoute({
 export const LIST_MESSAGES_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/threads/:threadId/messages',
+  mcp: {
+    toolset: 'memory',
+    name: 'list_messages',
+    description: 'List the messages in a conversation thread.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   pathParamSchema: threadIdPathParams,
   queryParamSchema: listMessagesQuerySchema,
@@ -1416,6 +1453,12 @@ export const GET_WORKING_MEMORY_ROUTE = createRoute({
 export const SAVE_MESSAGES_ROUTE = createRoute({
   method: 'POST',
   path: '/memory/save-messages',
+  mcp: {
+    toolset: 'memory',
+    name: 'save_messages',
+    description: 'Save messages to threads you own.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: agentIdQuerySchema,
   bodySchema: saveMessagesBodySchema,
@@ -1524,6 +1567,12 @@ export const SAVE_MESSAGES_ROUTE = createRoute({
 export const CREATE_THREAD_ROUTE = createRoute({
   method: 'POST',
   path: '/memory/threads',
+  mcp: {
+    toolset: 'memory',
+    name: 'create_thread',
+    description: 'Create a conversation thread.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: agentIdQuerySchema,
   bodySchema: createThreadBodySchema,
@@ -1596,6 +1645,12 @@ export const CREATE_THREAD_ROUTE = createRoute({
 export const UPDATE_THREAD_ROUTE = createRoute({
   method: 'PATCH',
   path: '/memory/threads/:threadId',
+  mcp: {
+    toolset: 'memory',
+    name: 'update_thread',
+    description: "Update a thread's title or metadata.",
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   pathParamSchema: threadIdPathParams,
   queryParamSchema: agentIdQuerySchema,
@@ -1749,6 +1804,12 @@ export const DELETE_THREAD_ROUTE = createRoute({
 export const CLONE_THREAD_ROUTE = createRoute({
   method: 'POST',
   path: '/memory/threads/:threadId/clone',
+  mcp: {
+    toolset: 'memory',
+    name: 'clone_thread',
+    description: 'Copy a thread and its messages into a new thread.',
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   pathParamSchema: threadIdPathParams,
   queryParamSchema: agentIdQuerySchema,
@@ -2073,6 +2134,12 @@ export const DELETE_MESSAGES_ROUTE = createRoute({
 export const SEARCH_MEMORY_ROUTE = createRoute({
   method: 'GET',
   path: '/memory/search',
+  mcp: {
+    toolset: 'memory',
+    name: 'search_memory',
+    description: "Semantic search over an agent's memory for a resource, optionally within one thread.",
+    requires: capabilities => capabilities.memory,
+  },
   responseType: 'json',
   queryParamSchema: searchMemoryQuerySchema,
   responseSchema: searchMemoryResponseSchema,
