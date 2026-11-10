@@ -3464,6 +3464,18 @@ export class Mastra<
     this.setStudio(fsStudio);
   }
 
+  /** Drops an agent's processor configurations; registering the agent again re-adds them. */
+  #removeProcessorConfigurations(agentId: string): void {
+    for (const [processorId, configs] of this.#processorConfigurations) {
+      const remaining = configs.filter(c => c.agentId !== agentId);
+      if (remaining.length === 0) {
+        this.#processorConfigurations.delete(processorId);
+      } else if (remaining.length !== configs.length) {
+        this.#processorConfigurations.set(processorId, remaining);
+      }
+    }
+  }
+
   /**
    * Removes an agent from the Mastra instance by its key or ID.
    * Used when stored agents are updated/deleted to allow fresh data to be loaded.
@@ -3492,6 +3504,7 @@ export class Mastra<
       // Clear from stored agents cache to prevent stale data
       if (agentId) {
         this.#storedAgentsCache.delete(agentId);
+        this.#removeProcessorConfigurations(agentId);
       }
       return true;
     }
@@ -3506,6 +3519,7 @@ export class Mastra<
       // Clear from stored agents cache to prevent stale data
       if (agentId) {
         this.#storedAgentsCache.delete(agentId);
+        this.#removeProcessorConfigurations(agentId);
       }
       return true;
     }
