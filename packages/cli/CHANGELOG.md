@@ -1,5 +1,21 @@
 # mastra
 
+## 1.39.0-alpha.7
+
+### Minor Changes
+
+- Added `mastra api factory project environment variables` commands to list, set, update and delete a Factory project's sandbox environment variables. Values are never returned. ([#29923](https://github.com/mastra-ai/mastra/pull/29923))
+
+  ```bash
+  mastra api factory project environment variables set <project-id> NPM_TOKEN '{"value":"<token>","appliesTo":"runtime"}'
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`4e7dbf9`](https://github.com/mastra-ai/mastra/commit/4e7dbf9cc3f10f8ae4d93f4cd4c2892bd2cd6554), [`2d16c84`](https://github.com/mastra-ai/mastra/commit/2d16c84823139420e6757f9e247d5a3f5061d37b), [`42bc816`](https://github.com/mastra-ai/mastra/commit/42bc816c076197c376b0502cec85c9b8a2e22a43), [`ebbea50`](https://github.com/mastra-ai/mastra/commit/ebbea50d38f2f4996675fbf33c047d1fd63dfd05)]:
+  - @mastra/core@1.83.0-alpha.7
+  - @mastra/deployer@1.83.0-alpha.7
+
 ## 1.39.0-alpha.6
 
 ### Patch Changes

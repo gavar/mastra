@@ -1,5 +1,27 @@
 # @mastra/e2b
 
+## 0.17.0-alpha.0
+
+### Minor Changes
+
+- Added a `buildEnvRevision` option to `createRepoTemplate()`. When it's set, the template name uses the revision instead of a hash of the `buildEnv` values, so secrets stay out of a name anyone listing templates can see. Change the revision whenever the values change to build a new template. Without a revision, `buildEnv` works as before. `E2BFactorySandbox` passes `buildEnv` and `buildEnvRevision` from the sandbox context through to it. ([#29923](https://github.com/mastra-ai/mastra/pull/29923))
+
+  ```ts
+  import { createRepoTemplate } from '@mastra/e2b';
+
+  const template = createRepoTemplate({
+    getRepositoryAccess: async () => ({ cloneUrl: 'https://github.com/acme/app.git' }),
+    setupCommand: 'npm ci',
+    buildEnv: { NPM_TOKEN: process.env.NPM_TOKEN! },
+    buildEnvRevision: 'rev-2',
+  });
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`4e7dbf9`](https://github.com/mastra-ai/mastra/commit/4e7dbf9cc3f10f8ae4d93f4cd4c2892bd2cd6554), [`2d16c84`](https://github.com/mastra-ai/mastra/commit/2d16c84823139420e6757f9e247d5a3f5061d37b), [`42bc816`](https://github.com/mastra-ai/mastra/commit/42bc816c076197c376b0502cec85c9b8a2e22a43), [`ebbea50`](https://github.com/mastra-ai/mastra/commit/ebbea50d38f2f4996675fbf33c047d1fd63dfd05)]:
+  - @mastra/core@1.83.0-alpha.7
+
 ## 0.16.1
 
 ### Patch Changes
