@@ -17,6 +17,52 @@ afterEach(async () => {
 });
 
 describe('generated module evaluation', () => {
+  it.each([false, true])('preserves the Mastra export and agent graph (factory: %s)', async factory => {
+    const userEntry = join(dir, 'index.mjs');
+    await writeFile(
+      userEntry,
+      `import { Mastra } from ${JSON.stringify(import.meta.resolve('@mastra/core/mastra'))};
+export const mastra = ${factory ? '() => ' : ''}new Mastra({});
+export const originalMastra = mastra;`,
+    );
+    const agentDir = join(dir, 'agents', 'weather');
+    await mkdir(agentDir, { recursive: true });
+    await writeFile(
+      join(agentDir, 'config.mjs'),
+      `export default { model: 'openai/gpt-6-luna', instructions: 'Answer briefly.', workspace: undefined };`,
+    );
+    const agents: DiscoveredFsAgent[] = [
+      {
+        name: 'weather',
+        dir: agentDir,
+        configPath: join(agentDir, 'config.mjs'),
+        tools: [],
+        inputProcessors: [],
+        outputProcessors: [],
+        scorers: [],
+        skills: [],
+        subagents: [],
+      },
+    ];
+    const source = (await generateFsAgentsModule(userEntry, agents)).replace(
+      `'@mastra/core/agent'`,
+      JSON.stringify(import.meta.resolve('@mastra/core/agent')),
+    );
+    const generated = join(dir, 'real-wrapper.mjs');
+    await writeFile(generated, source);
+    const mod = await import(pathToFileURL(generated).href);
+    if (factory) {
+      const first = mod.mastra();
+      const second = mod.mastra();
+      expect(first.getAgent('weather').id).toBe('weather');
+      expect(second.getAgent('weather').id).toBe('weather');
+      expect(second.getAgent('weather')).not.toBe(first.getAgent('weather'));
+    } else {
+      expect(mod.mastra).toBe(mod.originalMastra);
+      expect(mod.mastra.getAgent('weather').id).toBe('weather');
+    }
+  });
+
   it('imports the user entry, assembles agents, and registers them', async () => {
     // Stub @mastra/core/agent so we do not need to construct a real Agent.
     const coreStub = join(dir, 'core-agent.mjs');

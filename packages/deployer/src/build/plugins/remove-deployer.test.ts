@@ -8,6 +8,21 @@ import { removeDeployer } from './remove-deployer';
 describe('Remove deployer', () => {
   const _dirname = dirname(fileURLToPath(import.meta.url));
 
+  it.each([
+    ["import { CloudflareDeployer } from '@mastra/deployer-cloudflare';", false],
+    ["import CloudflareDeployer from '@mastra/deployer-cloudflare';", false],
+    ["import { CloudflareDeployer, shared } from '@mastra/deployer-cloudflare'; export { shared };", true],
+    ["import { CloudflareDeployer } from '@mastra/deployer-cloudflare'; export { CloudflareDeployer };", true],
+  ])('keeps only deployer imports still used at runtime: %s', async (imports, retained) => {
+    const plugin = removeDeployer('/project/index.ts');
+    const result = await (plugin.transform as Function)(
+      `import { Mastra } from '@mastra/core/mastra';\n${imports}\nexport const mastra = new Mastra({ deployer: new CloudflareDeployer({ name: 'worker' }) });`,
+      '/project/index.ts',
+    );
+    expect(result.code.includes('@mastra/deployer-cloudflare')).toBe(retained);
+    expect(result.code).not.toContain('deployer:');
+  });
+
   it.for([
     ['./__fixtures__/basic.js'],
     ['./__fixtures__/basic-with-const.js'],

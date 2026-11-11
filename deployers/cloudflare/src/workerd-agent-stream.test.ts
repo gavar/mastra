@@ -1,6 +1,7 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { LLMock } from '@copilotkit/aimock';
+import { prepareFsAgentsEntry, writeFsAgentsEntry } from '@mastra/deployer/build';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { unstable_dev } from 'wrangler';
 import { z } from 'zod';
@@ -91,4 +92,84 @@ describe('CloudflareDeployer default config in workerd', () => {
       expect(configSchema.parse(JSON.parse(json)).compatibility_date).toBe('2025-04-01');
     }
   });
+
+  it('serves file-based agents from a fresh graph for each Worker request', async () => {
+    await writeFile(
+      join(projectDir, 'package.json'),
+      JSON.stringify({ name: 'file-based-worker', private: true, type: 'module' }),
+    );
+    await mkdir(join(projectDir, 'node_modules', '@mastra'), { recursive: true });
+    await symlink(
+      join(import.meta.dirname, '..'),
+      join(projectDir, 'node_modules', '@mastra', 'deployer-cloudflare'),
+      'dir',
+    );
+    const mastraSource = join(projectDir, 'src', 'mastra');
+    const agentDir = join(mastraSource, 'agents', 'router');
+    await mkdir(agentDir, { recursive: true });
+    const entry = join(mastraSource, 'index.ts');
+    await writeFile(
+      entry,
+      `import { Mastra } from '@mastra/core/mastra';
+import { registerApiRoute } from '@mastra/core/server';
+import { CloudflareDeployer } from '@mastra/deployer-cloudflare';
+const seen = new WeakSet();
+export const mastra = new Mastra({
+  deployer: new CloudflareDeployer({ name: 'file-based-worker' }),
+  server: {
+    apiRoutes: [registerApiRoute('/request-agent', {
+      method: 'GET',
+      requiresAuth: false,
+      handler: c => {
+        const agent = c.get('mastra').getAgent('router');
+        const reused = seen.has(agent);
+        seen.add(agent);
+        return c.json({ id: agent.id, reused });
+      },
+    })],
+  },
+});
+`,
+    );
+    await writeFile(
+      join(agentDir, 'config.ts'),
+      `export default { model: 'openai/gpt-6-luna', workspace: undefined };\n`,
+    );
+    await writeFile(join(agentDir, 'instructions.md'), 'Answer briefly.\n');
+    const discovered = await prepareFsAgentsEntry(mastraSource, entry, mastraDir);
+    const deployer = new CloudflareDeployer({ name: 'file-based-worker' });
+    deployer.setConfigEntryFile(entry);
+    await deployer.prepare(mastraDir);
+    await writeFsAgentsEntry(discovered);
+    await deployer.bundle(discovered.entryFile, mastraDir, {
+      toolsPaths: discovered.toolPaths,
+      projectRoot: projectDir,
+    });
+
+    const cwd = process.cwd();
+    process.chdir(projectDir);
+    try {
+      const dev = await unstable_dev(join(mastraDir, 'output', 'index.mjs'), {
+        config: join(projectDir, 'wrangler.jsonc'),
+        ip: '127.0.0.1',
+        port: 0,
+        logLevel: 'error',
+        experimental: { disableExperimentalWarning: true, testMode: true },
+      });
+      try {
+        for (let request = 0; request < 2; request++) {
+          const response = await dev.fetch('/request-agent');
+          expect(response.status).toBe(200);
+          expect(await response.json()).toEqual({ id: 'router', reused: false });
+        }
+        const response = await dev.fetch('/api/agents');
+        expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({ router: { source: 'fs', instructions: 'Answer briefly.\n' } });
+      } finally {
+        await dev.stop();
+      }
+    } finally {
+      process.chdir(cwd);
+    }
+  }, 120_000);
 });

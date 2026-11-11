@@ -21,6 +21,12 @@ describe.for([['pnpm'] as const])(`%s monorepo`, { concurrent: false }, ([pkgMan
           await setupMonorepo(isolatedFixturePath, pkgManager);
 
           const appDir = join(isolatedFixturePath, 'apps', 'custom');
+          const agentDir = join(appDir, 'src', 'mastra', 'agents', 'fs-helper');
+          await mkdir(agentDir, { recursive: true });
+          await Promise.all([
+            writeFile(join(agentDir, 'config.ts'), `export default { model: 'openai/gpt-6-luna' };\n`),
+            writeFile(join(agentDir, 'instructions.md'), 'Answer briefly.\n'),
+          ]);
           const mastraConfigPath = join(appDir, 'src', 'mastra', 'index.ts');
           const ajvShimPath = join(appDir, 'src', 'ajv-shim.mjs');
           const ajv2020ShimPath = join(appDir, 'src', 'ajv-2020-shim.mjs');
@@ -99,6 +105,7 @@ class AliasDeployer extends Deployer {
             env: { ...process.env, MASTRA_BUILD_SKIP_INSTALL: 'true' },
           });
           expect(buildResult.exitCode, `${buildResult.stdout}\n${buildResult.stderr}`).toBe(0);
+          expect(`${buildResult.stdout}\n${buildResult.stderr}`).not.toContain('Invalid Mastra config');
 
           const outputDir = join(appDir, '.mastra', 'output');
           const outputFiles = (await readdir(outputDir)).filter(file => file.endsWith('.mjs'));
