@@ -381,6 +381,7 @@ export async function analyzeBundle(
   entries: string[],
   mastraEntry: string,
   {
+    configEntryFile = mastraEntry,
     outputDir,
     projectRoot,
     platform,
@@ -388,6 +389,7 @@ export async function analyzeBundle(
     bundlerOptions,
     env = { 'process.env.NODE_ENV': JSON.stringify('production') },
   }: {
+    configEntryFile?: string;
     outputDir: string;
     projectRoot: string;
     platform: BundlerPlatform;
@@ -400,11 +402,11 @@ export async function analyzeBundle(
   },
   logger: IMastraLogger,
 ) {
-  const mastraConfig = await readFile(mastraEntry, 'utf-8');
+  const mastraConfig = await readFile(configEntryFile, 'utf-8');
   const mastraConfigResult: { hasValidConfig: boolean; projectType?: string } = { hasValidConfig: false };
 
   await transformAsync(mastraConfig, {
-    filename: mastraEntry,
+    filename: configEntryFile,
     presets: [import.meta.resolve('@babel/preset-typescript')],
     plugins: [() => checkConfigExport(mastraConfigResult)],
   });
@@ -440,6 +442,7 @@ export async function analyzeBundle(
   for (const entry of entries) {
     const isVirtualFile = entry.includes('\n') || !existsSync(entry);
     const analyzeResult = await analyzeEntry({ entry, isVirtualFile }, mastraEntry, {
+      configEntryFile,
       logger,
       sourcemapEnabled: bundlerOptions?.enableSourcemap ?? false,
       workspaceMap,

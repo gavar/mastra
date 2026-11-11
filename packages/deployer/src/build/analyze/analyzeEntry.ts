@@ -57,6 +57,7 @@ function getInputPlugins(
   { entry, isVirtualFile }: { entry: string; isVirtualFile: boolean },
   mastraEntry: string,
   {
+    configEntryFile,
     sourcemapEnabled,
     env,
     workspaceMap,
@@ -65,6 +66,7 @@ function getInputPlugins(
     alias,
     platform,
   }: {
+    configEntryFile: string;
     sourcemapEnabled: boolean;
     env: Record<string, string>;
     workspaceMap: Map<string, WorkspacePackageInfo>;
@@ -104,7 +106,7 @@ function getInputPlugins(
         transformMixedEsModules: true,
         extensions: ['.js', '.ts'],
       }),
-      removeDeployer(mastraEntry, {
+      removeDeployer(configEntryFile, {
         sourcemap: sourcemapEnabled,
       }),
       esbuild(),
@@ -126,6 +128,7 @@ async function captureDependenciesToOptimize(
   {
     logger,
     mastraEntry,
+    configEntryFile,
     shouldCheckTransitiveDependencies,
     env,
     analyzeCache,
@@ -137,6 +140,7 @@ async function captureDependenciesToOptimize(
   }: {
     logger: IMastraLogger;
     mastraEntry: string;
+    configEntryFile: string;
     shouldCheckTransitiveDependencies: boolean;
     env: Record<string, string>;
     /** Shared cache to avoid re-analyzing the same entry across recursive calls */
@@ -230,6 +234,7 @@ async function captureDependenciesToOptimize(
       processedWorkspaceEntries.add(resolvedEntry);
 
       const analysis = await analyzeEntry({ entry: resolvedPath, isVirtualFile: false }, mastraEntry, {
+        configEntryFile,
         workspaceMap,
         projectRoot,
         logger,
@@ -341,6 +346,7 @@ export async function analyzeEntry(
   },
   mastraEntry: string,
   {
+    configEntryFile = mastraEntry,
     logger,
     sourcemapEnabled,
     workspaceMap,
@@ -354,6 +360,7 @@ export async function analyzeEntry(
     alias = {},
     platform = 'node',
   }: {
+    configEntryFile?: string;
     logger: IMastraLogger;
     sourcemapEnabled: boolean;
     workspaceMap: Map<string, WorkspacePackageInfo>;
@@ -397,6 +404,7 @@ export async function analyzeEntry(
       treeshake: false,
       preserveSymlinks: true,
       plugins: getInputPlugins({ entry, isVirtualFile }, mastraEntry, {
+        configEntryFile,
         sourcemapEnabled,
         env,
         workspaceMap,
@@ -422,6 +430,7 @@ export async function analyzeEntry(
     const depsToOptimize = await captureDependenciesToOptimize(output[0] as OutputChunk, workspaceMap, projectRoot, {
       logger,
       mastraEntry,
+      configEntryFile,
       shouldCheckTransitiveDependencies,
       env,
       analyzeCache: effectiveAnalyzeCache,

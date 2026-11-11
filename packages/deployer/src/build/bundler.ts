@@ -70,6 +70,7 @@ export async function getInputOptions(
   platform: BundlerPlatform,
   env: Record<string, string> = { 'process.env.NODE_ENV': JSON.stringify('production') },
   {
+    configEntryFile = entryFile,
     sourcemap = false,
     minify = false,
     isDev = false,
@@ -80,6 +81,7 @@ export async function getInputOptions(
     explicitExternals = [],
     alias = {},
   }: {
+    configEntryFile?: string;
     sourcemap?: boolean;
     minify?: boolean;
     isDev?: boolean;
@@ -171,7 +173,7 @@ export async function getInputOptions(
       // },
       json(),
       localStorageDetector(workspaceRoot || projectRoot),
-      removeDeployer(entryFile, { sourcemap }),
+      removeDeployer(configEntryFile, { sourcemap }),
       // treeshake unused imports
       esbuild({
         include: entryFile,

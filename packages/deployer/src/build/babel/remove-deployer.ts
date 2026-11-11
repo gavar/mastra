@@ -9,7 +9,7 @@ export function removeDeployer(): PluginObject<RemoveDeployerState> {
   // Helper to remove deployer property from an object and clean up its binding
   function removeDeployerFromObject(
     objectExpr: t.ObjectExpression,
-    scope: { getBinding: (name: string) => { path?: NodePath } | undefined },
+    scope: NodePath['scope'],
   ): t.ObjectProperty | undefined {
     const deployerProp = objectExpr.properties.find(
       prop => t.isObjectProperty(prop) && t.isIdentifier(prop.key) && prop.key.name === 'deployer',
@@ -23,6 +23,20 @@ export function removeDeployer(): PluginObject<RemoveDeployerState> {
         const deployerBinding = scope.getBinding(deployerProp.value.name);
         if (deployerBinding) {
           deployerBinding.path?.parentPath?.remove();
+        }
+      }
+
+      if (t.isNewExpression(deployerProp.value) && t.isIdentifier(deployerProp.value.callee)) {
+        const binding = scope.getBinding(deployerProp.value.callee.name);
+        if (
+          binding?.referencePaths.length === 1 &&
+          (binding.path.isImportSpecifier() || binding.path.isImportDefaultSpecifier())
+        ) {
+          const declaration = binding.path.parentPath;
+          binding.path.remove();
+          if (declaration?.isImportDeclaration() && declaration.node.specifiers.length === 0) {
+            declaration.remove();
+          }
         }
       }
     }

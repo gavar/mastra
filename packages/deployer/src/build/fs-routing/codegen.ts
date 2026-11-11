@@ -250,7 +250,7 @@ export async function generateFsAgentsModule(
   // at `<bundle>/workspace/<name>` wherever the bundle is deployed. Seed files
   // authored under `agents/<name>/workspace/**` are mirrored there at build time.
   // `name` may be a slash-joined path (`<parent>/<child>`) for subagents.
-  lines.push(`const __bundleDir = __dirname(__fileURLToPath(import.meta.url));`);
+  lines.push(`const __bundleDir = import.meta.url ? __dirname(__fileURLToPath(import.meta.url)) : '/';`);
   lines.push(`const __workspaceBasePath = name => __join(__bundleDir, 'workspace', ...name.split('/'));`);
   lines.push(``);
 
@@ -293,14 +293,16 @@ export async function generateFsAgentsModule(
     entryExprs.push(expr);
   }
 
-  // In standalone mode (no user entry), auto-construct a Mastra instance.
-  // In wrapper mode, reference the user's exported instance.
+  // platform deployers may defer construction until a request arrives
+  lines.push(`const __createFsMastra = () => {`);
   if (standalone) {
     lines.push(``);
     lines.push(`const __mastra = new Mastra({});`);
   } else {
     lines.push(``);
-    lines.push(`const __mastra = __userEntry.mastra;`);
+    lines.push(
+      `const __mastra = typeof __userEntry.mastra === 'function' ? __userEntry.mastra() : __userEntry.mastra;`,
+    );
   }
 
   lines.push(``);
@@ -375,7 +377,11 @@ export async function generateFsAgentsModule(
   }
 
   lines.push(``);
-  lines.push(`export const mastra = __mastra;`);
+  lines.push(`return __mastra;`);
+  lines.push(`};`);
+  lines.push(
+    `export const mastra = ${standalone ? '__createFsMastra()' : "typeof __userEntry.mastra === 'function' ? __createFsMastra : __createFsMastra()"};`,
+  );
 
   return lines.join('\n');
 }

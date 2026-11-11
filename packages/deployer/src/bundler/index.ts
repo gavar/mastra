@@ -294,7 +294,7 @@ export abstract class Bundler extends MastraBase implements IBundler {
   protected outputDir = 'output';
   protected platform: BundlerPlatform = 'node';
   protected defaultExternalsPreset = false;
-  private configEntryFile?: string;
+  protected configEntryFile?: string;
 
   constructor(name: string, component: 'BUNDLER' | 'DEPLOYER' = 'BUNDLER') {
     super({ name, component });
@@ -402,6 +402,7 @@ export abstract class Bundler extends MastraBase implements IBundler {
       ([] as string[]).concat(entry),
       mastraFile,
       {
+        configEntryFile: this.configEntryFile,
         outputDir: join(outputDirectory, this.analyzeOutputDir),
         projectRoot: outputDirectory,
         platform: this.platform,
@@ -506,6 +507,7 @@ export abstract class Bundler extends MastraBase implements IBundler {
         'process.env.NODE_ENV': JSON.stringify('production'),
       },
       {
+        configEntryFile: this.configEntryFile,
         sourcemap: enableSourcemap,
         minify: enableMinify,
         workspaceRoot,
@@ -660,6 +662,7 @@ export abstract class Bundler extends MastraBase implements IBundler {
         [serverFile, ...Object.values(additionalEntries), ...Object.values(resolvedToolsPaths)],
         mastraEntryFile,
         {
+          configEntryFile: this.configEntryFile,
           outputDir: analyzeDir,
           projectRoot: entryProjectRoot,
           platform: this.platform,
